@@ -11,4 +11,10 @@ module "bss_virtual_network" {
   location    = module.bss_resource_group.rg_location
   name        = var.bss_vn_name
   environment = var.environment
+  subnets     = {
+    aks-subnet = {
+      name           = "aks-subnet"
+      address_prefix = "10.0.1.0/24"
+    }
+  }
 }
