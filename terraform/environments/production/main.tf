@@ -28,6 +28,7 @@ module "bss_virtual_network" {
 
 module "bss_k8s" {
   source         = "../../modules/aks"
+  rg_id          = module.bss_resource_group.rg_id
   rg_name        = module.bss_resource_group.rg_name
   location       = module.bss_resource_group.rg_location
   name           = var.bss_k8s_name

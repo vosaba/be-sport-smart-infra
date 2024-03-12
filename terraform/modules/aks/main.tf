@@ -41,6 +41,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     network_plugin    = "azure"
     load_balancer_sku = "standard"
     network_policy    = "azure"
+    service_cidr      = "10.0.2.0/24"
+    dns_service_ip    = "10.0.2.10"
   }
 
   tags = {

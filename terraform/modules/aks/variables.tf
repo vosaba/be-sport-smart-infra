@@ -3,6 +3,11 @@ variable "environment" {
   type        = string
 }
 
+variable "rg_id" {
+  description = "Id of the resource group"
+  type        = string
+}
+
 variable "rg_name" {
   description = "Name of the resource group"
   type        = string
@@ -39,7 +44,7 @@ variable "node_count" {
 variable "username" {
   description = "User name for linux profile"
   type        = string
-  default     = "admin"
+  default     = "abasov"
 }
 
 variable "vm_size" {
