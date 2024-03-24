@@ -34,7 +34,7 @@ module "bss_k8s" {
   location                   = module.bss_resource_group.rg_location
   name                       = var.bss_k8s_name
   vnet_subnet_id             = module.bss_virtual_network.subnets_details["aks-subnet"].id
-  vm_size                    = "Standard_B1s"
+  vm_size                    = "Standard_B2als_v2"
   key_vault_secrets_provider = true
   environment                = var.environment
 }
