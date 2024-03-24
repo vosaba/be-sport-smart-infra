@@ -32,3 +32,8 @@ variable "bss_k8s_name" {
   description = "Name k8s for Be Sport Smart"
   type        = string
 }
+
+variable "bss_kv_name" {
+  description = "value of the key vault for Be Sport Smart"
+  type        = string
+}

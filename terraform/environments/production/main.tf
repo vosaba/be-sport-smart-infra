@@ -18,6 +18,7 @@ module "bss_virtual_network" {
   location    = module.bss_resource_group.rg_location
   name        = var.bss_vn_name
   environment = var.environment
+
   subnets     = {
     aks-subnet = {
       name           = "aks-subnet"
@@ -27,23 +28,37 @@ module "bss_virtual_network" {
 }
 
 module "bss_k8s" {
-  source         = "../../modules/aks"
-  rg_id          = module.bss_resource_group.rg_id
-  rg_name        = module.bss_resource_group.rg_name
-  location       = module.bss_resource_group.rg_location
-  name           = var.bss_k8s_name
-  vnet_subnet_id = module.bss_virtual_network.subnets_details["aks-subnet"].id
-  environment    = var.environment
+  source                     = "../../modules/aks"
+  rg_id                      = module.bss_resource_group.rg_id
+  rg_name                    = module.bss_resource_group.rg_name
+  location                   = module.bss_resource_group.rg_location
+  name                       = var.bss_k8s_name
+  vnet_subnet_id             = module.bss_virtual_network.subnets_details["aks-subnet"].id
+  vm_size                    = "Standard_B1s"
+  key_vault_secrets_provider = true
+  environment                = var.environment
 }
 
 module "la_acr" {
-  source   = "../../modules/container_registry"
-  rg_name  = module.la_resource_group.rg_name
-  location = module.la_resource_group.rg_location
-  name     = var.la_arc_name
+  source      = "../../modules/container_registry"
+  rg_name     = module.la_resource_group.rg_name
+  location    = module.la_resource_group.rg_location
+  name        = var.la_arc_name
+  environment = var.environment
+
   kubelet_identities = {
     bss_k8s = {
       id = module.bss_k8s.kubelet_identity
     }
   }
+}
+
+module "bss_key_vault" {
+  source      = "../../modules/key_vault"
+  rg_name     = module.bss_resource_group.rg_name
+  location    = module.bss_resource_group.rg_location
+  name        = var.bss_kv_name
+  environment = var.environment
+
+  kubelet_identities = [ module.bss_k8s.kubelet_identity ]
 }

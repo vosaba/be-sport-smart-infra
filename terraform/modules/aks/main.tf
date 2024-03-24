@@ -1,7 +1,3 @@
-# resource "random_pet" "azurerm_kubernetes_cluster_dns_prefix" {
-#   prefix = "dns"
-# }
-
 terraform {
   required_providers {
     azapi = {
@@ -45,15 +41,14 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     dns_service_ip    = "10.0.2.10"
   }
 
+  dynamic "key_vault_secrets_provider" {
+    for_each = var.key_vault_secrets_provider ? [1] : []
+    content {
+      secret_rotation_enabled = var.key_vault_secrets_provider
+    }
+  }
+
   tags = {
     environment = var.environment
   }
 }
-
-# resource "azurerm_role_assignment" "k8s" {
-#   count = var.container_registry_id ? 1 : 0
-#   principal_id                     = azurerm_kubernetes_cluster.k8s.kubelet_identity[0].object_id
-#   role_definition_name             = "AcrPull"
-#   scope                            = var.container_registry_id
-#   skip_service_principal_aad_check = true
-# }

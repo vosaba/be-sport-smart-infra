@@ -58,6 +58,12 @@ variable "vnet_subnet_id" {
   type        = string
 }
 
+variable "key_vault_secrets_provider" {
+  description = "Enable key vault secret provider"
+  type        = bool
+  default     = false
+}
+
 # variable "container_registry_id" {
 #   description = "Id of container registtry to assign pull role"
 #   type        = string

@@ -14,20 +14,18 @@ variable "location" {
 }
 
 variable "name" {
-  description = "Name of the acr"
+  description = "Name of the Key Vault"
   type        = string
 }
 
 variable "sku" {
   description = "Sku"
   type        = string
-  default    = "Basic"
+  default    = "standard"
 }
 
 variable "kubelet_identities" {
-  description = "A map of k8s identity to add pull permission"
-  type = map(object({
-    id = string
-  }))
-  default = {}
+  type = list(string)
+  default = [ ]
+  description = "List of kubelet identities to assign permissions"
 }
