@@ -20,10 +20,12 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   }
 
   default_node_pool {
-    name           = "default"
-    vm_size        = var.vm_size
-    node_count     = var.node_count
-    vnet_subnet_id = var.vnet_subnet_id
+    name                        = "default"
+    vm_size                     = var.vm_size
+    node_count                  = var.node_count
+    vnet_subnet_id              = var.vnet_subnet_id
+    # Needs for changing VM configuration, temporary place for pod migranitions
+    temporary_name_for_rotation = "temp1995name"
   }
 
   linux_profile {
