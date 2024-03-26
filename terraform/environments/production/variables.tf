@@ -18,22 +18,7 @@ variable "la_arc_name" {
   type        = string
 }
 
-variable "bss_rg_name" {
-  description = "Name of the resource group for Be Sport Smart"
-  type        = string
-}
-
-variable "bss_vn_name" {
-  description = "Name of virtual network for Be Sport Smart"
-  type        = string
-}
-
-variable "bss_k8s_name" {
-  description = "Name k8s for Be Sport Smart"
-  type        = string
-}
-
-variable "bss_kv_name" {
-  description = "value of the key vault for Be Sport Smart"
+variable "bss_name_prefix" {
+  description = "Name prefix used for Be Sport Smart resources"
   type        = string
 }

@@ -64,6 +64,12 @@ variable "key_vault_secrets_provider" {
   default     = false
 }
 
+variable "appgw_id" {
+  description = "Id of application gateway"
+  type        = string
+  default     = ""
+}
+
 # variable "container_registry_id" {
 #   description = "Id of container registtry to assign pull role"
 #   type        = string

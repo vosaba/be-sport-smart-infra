@@ -50,6 +50,14 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     }
   }
 
+  dynamic "ingress_application_gateway" {
+  for_each = var.appgw_id != "" ? [1] : []
+  content {
+    gateway_name = "ingress-app-gw"
+    gateway_id   = var.appgw_id
+  }
+}
+
   tags = {
     environment = var.environment
   }
