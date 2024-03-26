@@ -37,10 +37,10 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 
   network_profile {
     network_plugin    = "azure"
-    load_balancer_sku = "standard"
+    load_balancer_sku = var.load_balancer_sku
     network_policy    = "azure"
-    service_cidr      = "10.0.2.0/24"
-    dns_service_ip    = "10.0.2.10"
+    service_cidr      = var.service_cidr
+    dns_service_ip    = var.dns_service_ip
   }
 
   dynamic "key_vault_secrets_provider" {
@@ -53,7 +53,6 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   dynamic "ingress_application_gateway" {
   for_each = var.appgw_id != "" ? [1] : []
   content {
-    gateway_name = "ingress-app-gw"
     gateway_id   = var.appgw_id
   }
 }

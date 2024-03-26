@@ -53,6 +53,16 @@ variable "vm_size" {
   default     = "Standard_D2_v2"
 }
 
+variable "service_cidr" {
+  description = "CIDR block for the AKS service network"
+  type        = string
+}
+
+variable "dns_service_ip" {
+  description = "IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns)"
+  type        = string
+}
+
 variable "vnet_subnet_id" {
   description = "Subnet where the k8s Node Pool should exist"
   type        = string
@@ -70,7 +80,8 @@ variable "appgw_id" {
   default     = ""
 }
 
-# variable "container_registry_id" {
-#   description = "Id of container registtry to assign pull role"
-#   type        = string
-# }
+variable "load_balancer_sku" {
+  description = "Load balancer sku"
+  type        = string
+  default     = "standard"
+}

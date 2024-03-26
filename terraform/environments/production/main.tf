@@ -41,6 +41,8 @@ module "bss_k8s" {
   vm_size                    = "Standard_B2als_v2"
   key_vault_secrets_provider = true
   appgw_id                   = module.bss_appgw.appgw_id
+  service_cidr               = "10.0.3.0/24"
+  dns_service_ip             = "10.0.3.10"
   environment                = var.environment
 }
 
@@ -56,6 +58,8 @@ module "la_acr" {
       id = module.bss_k8s.kubelet_identity
     }
   }
+
+  depends_on = [module.bss_k8s]
 }
 
 module "bss_key_vault" {
