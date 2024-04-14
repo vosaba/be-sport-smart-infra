@@ -32,6 +32,7 @@ variable "identity" {
 variable "app_command_line" {
   description = "The cmd line to configure the app to run."
   type        = string
+  default     = ""
 }
 
 variable "tags" {

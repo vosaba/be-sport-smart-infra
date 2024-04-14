@@ -127,7 +127,7 @@ module "api" {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.applicationinsights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
 
-  app_command_line = local.api_command_line
+  #app_command_line = local.api_command_line
   identity = [{
     type = "SystemAssigned"
   }]
