@@ -28,8 +28,19 @@ variable "virtual_network_name" {
   type        = string
 }
 
+variable "aks_name" {
+  description = "The name of the AKS cluster."
+  type        = string
+  default     = ""
+}
+
 variable "subnet_name" {
   description = "The name of the subnet where the Application Gateway will be deployed"
+  type        = string
+}
+
+variable "virtual_network_id" {
+  description = "Virtual network id to assign contribution role to AKS service principal"
   type        = string
 }
 

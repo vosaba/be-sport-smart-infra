@@ -5,16 +5,16 @@ provider "azurerm" {
 
 
 terraform {
-  required_version = ">= 1.1.7, < 2.0.0"
+  required_version = ">= 1.0"
 
   required_providers {
     azurerm = {
-      version = "~>3.97.1"
-      source  = "hashicorp/azurerm"
+      source = "hashicorp/azurerm"
+      version = "~> 3.94.0"
     }
-    azurecaf = {
-      source  = "aztfmod/azurecaf"
-      version = "~>1.2.24"
+    azapi = {
+      source = "azure/azapi"
+      version = "~> 1.12.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -26,8 +26,6 @@ terraform {
     resource_group_name   = "common-resource-group"
     storage_account_name  = "abasovstorage"
     container_name        = "common-blob"
-    key                   = "production_3.terraform.tfstate"
+    key                   = "production.terraform.tfstate"
   }
 }
-
-data "azurerm_client_config" "current" {}

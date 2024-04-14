@@ -4,7 +4,7 @@ resource "azurerm_public_ip" "appgw_public_ip" {
   name                = "${var.public_ip_name}-ip"
   allocation_method   = "Static"
   sku                 = var.public_ip_sku_name
-  zones               = [1, 2, 3]
+  zones               = local.zones
 
   tags = {
     environment = var.environment
@@ -12,6 +12,7 @@ resource "azurerm_public_ip" "appgw_public_ip" {
 }
 
 locals {
+  zones                          = [1, 2, 3]
   backend_address_pool_name      = "${var.virtual_network_name}-beap"
   frontend_port_name             = "${var.virtual_network_name}-feport"
   frontend_ip_configuration_name = "${var.virtual_network_name}-feip"
@@ -25,7 +26,7 @@ resource "azurerm_application_gateway" "appgw" {
   location            = var.location
   resource_group_name = var.rg_name
   name                = "${var.appgw_name}-appgw"
-  zones               = [1, 2, 3]
+  zones               = local.zones
 
   sku {
     name     = var.sku_name
@@ -41,6 +42,11 @@ resource "azurerm_application_gateway" "appgw" {
   frontend_port {
     name = local.frontend_port_name
     port = 80
+  }
+
+  frontend_port {
+    name = "httpsPort"
+    port = 443
   }
 
   frontend_ip_configuration {
@@ -80,3 +86,33 @@ resource "azurerm_application_gateway" "appgw" {
     environment = var.environment
   }
 }
+
+data "azurerm_user_assigned_identity" "identity-appgw" {
+  name                = "ingressapplicationgateway-${var.aks_name}" # convention name for AGIC Identity
+  resource_group_name = var.rg_name
+
+  # depends_on = [azurerm_kubernetes_cluster.aks]
+}
+
+resource "azurerm_role_assignment" "role-contributor" {
+  scope                = var.virtual_network_id #data.azurerm_resource_group.rg-vnet.id # azurerm_resource_group.rg.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.identity-appgw.principal_id
+
+  depends_on = [azurerm_application_gateway.appgw]
+}
+resource "azurerm_role_assignment" "role-contributor-rg" {
+  scope                = var.rg_name # azurerm_resource_group.rg.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.identity-appgw.principal_id
+
+  depends_on = [azurerm_application_gateway.appgw]
+}
+
+# resource "azurerm_role_assignment" "aks_mi_network_contributor" {
+#   scope                = var.virtual_network_id
+#   role_definition_name = "Network Contributor"
+#   principal_id         = azurerm_application_gateway.appgw.id
+
+#   skip_service_principal_aad_check = true
+# }

@@ -1,5 +1,2 @@
-environment     = "Production"
-rg_location     = "East US"
-la_rg_name      = "leonid-abasov"
-la_arc_name     = "leonidabasov"
-bss_name_prefix = "be-sport-smart"
+environment     = "be-sport-smart-3"
+location        = "East US"

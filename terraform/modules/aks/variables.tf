@@ -63,6 +63,11 @@ variable "dns_service_ip" {
   type        = string
 }
 
+variable "vnet_id" {
+  description = "Virtual network id to assign contribution role to AKS service principal"
+  type        = string
+}
+
 variable "vnet_subnet_id" {
   description = "Subnet where the k8s Node Pool should exist"
   type        = string
