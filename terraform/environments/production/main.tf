@@ -122,7 +122,8 @@ module "api" {
   app_settings = {
     "AZURE_COSMOS_CONNECTION_STRING_KEY"    = local.cosmos_connection_string_key
     "AZURE_COSMOS_DATABASE_NAME"            = module.cosmos.AZURE_COSMOS_DATABASE_NAME
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "true"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
+    "ENABLE_ORYX_BUILD"                     = "True"
     "AZURE_KEY_VAULT_ENDPOINT"              = module.keyvault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.applicationinsights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
