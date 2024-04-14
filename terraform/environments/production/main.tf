@@ -101,7 +101,8 @@ module "web" {
   appservice_plan_id = module.appserviceplan.APPSERVICE_PLAN_ID
 
   app_settings = {
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"                  = "false"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
+    "ENABLE_ORYX_BUILD"                     = "True"
   }
 
   app_command_line = "pm2 serve /home/site/wwwroot --no-daemon --spa"
