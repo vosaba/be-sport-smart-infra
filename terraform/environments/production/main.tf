@@ -52,7 +52,7 @@ module "loganalytics" {
 module "keyvault" {
   source                   = "../../modules/keyvault"
   location                 = var.location
-  #principal_id             = var.principal_id
+  principal_id             = data.azurerm_client_config.current.object_id
   rg_name                  = azurerm_resource_group.rg.name
   tags                     = azurerm_resource_group.rg.tags
   resource_token           = local.resource_token
