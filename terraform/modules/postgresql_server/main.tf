@@ -34,17 +34,18 @@ resource "azurerm_postgresql_server" "postgresserver" {
  
   sku_name = "B_Gen5_2"
  
-  storage_mb                   = 5120
-  backup_retention_days        = 7
-  geo_redundant_backup_enabled = false
-  auto_grow_enabled            = true
+  storage_mb                       = 5120
+  backup_retention_days            = 7
+  geo_redundant_backup_enabled     = false
+  auto_grow_enabled                = true
  
-  administrator_login          = random_string.username.result
-  administrator_login_password = random_password.password.result
-  version                      = "9.5"
-  ssl_enforcement_enabled      = true
+  administrator_login              = random_string.username.result
+  administrator_login_password     = random_password.password.result
+  version                          = "9.5"
+  ssl_enforcement_enabled          = false
+  ssl_minimal_tls_version_enforced = "TLSEnforcementDisabled"
 
-  tags                         = var.tags
+  tags                             = var.tags
 }
 
 resource "azurerm_postgresql_database" "db" {
