@@ -41,7 +41,7 @@ resource "azurerm_postgresql_server" "postgresserver" {
  
   administrator_login              = random_string.username.result
   administrator_login_password     = random_password.password.result
-  version                          = "9.5"
+  version                          = "11"
   ssl_enforcement_enabled          = false
   ssl_minimal_tls_version_enforced = "TLSEnforcementDisabled"
 
