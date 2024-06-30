@@ -1,31 +1,42 @@
-variable "environment" {
-  description = "Environment name"
+variable "location" {
+  description = "The supported Azure location where the resource deployed"
   type        = string
 }
 
 variable "rg_name" {
-  description = "Name of the resource group"
+  description = "The name of the resource group to deploy resources into"
   type        = string
 }
 
-variable "location" {
-  description = "Resource group region"
+variable "tags" {
+  description = "A list of tags used for deployed services."
+  type        = map(string)
+}
+
+variable "resource_token" {
+  description = "A suffix string to centrally mitigate resource name collisions."
   type        = string
 }
 
-variable "name" {
-  description = "Name of the Key Vault"
+variable "principal_id" {
+  description = "The Id of the service principal to add to deployed keyvault access policies"
+  sensitive   = true
   type        = string
+  default     = ""
 }
 
-variable "sku" {
-  description = "Sku"
-  type        = string
-  default    = "standard"
+variable "access_policy_object_ids" {
+  description = "A list of object ids to be be added to the keyvault access policies"
+  type        = list(string)
+  sensitive   = true
+  default     = []
 }
 
-variable "kubelet_identities" {
-  type = list(string)
-  default = [ ]
-  description = "List of kubelet identities to assign permissions"
+variable "secrets" {
+  description = "A list of secrets to be added to the keyvault"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  sensitive = true
 }

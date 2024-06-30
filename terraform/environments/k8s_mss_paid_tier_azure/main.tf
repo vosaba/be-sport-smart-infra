@@ -82,8 +82,9 @@ module "bss_key_vault" {
   source      = "../../modules/key_vault"
   rg_name     = module.bss_resource_group.rg_name
   location    = module.bss_resource_group.rg_location
-  name        = var.bss_name_prefix
-  environment = var.environment
+  secrets     = []
+  tags        = {}
+  resource_token = ""
 
-  kubelet_identities = [ module.bss_k8s.kubelet_identity ]
+  access_policy_object_ids = [ module.bss_k8s.kubelet_identity ]
 }

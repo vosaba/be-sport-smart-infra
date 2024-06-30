@@ -18,6 +18,12 @@ variable "resource_token" {
   type        = string
 }
 
+variable "sku_name" {
+  description = "The SKU for the plan."
+  type        = string
+  default     = "B1MS"
+}
+
 variable "db_names" {
   type = list(string)
   default = [ ]

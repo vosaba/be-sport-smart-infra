@@ -3,7 +3,6 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
-
 terraform {
   required_version = ">= 1.0"
 

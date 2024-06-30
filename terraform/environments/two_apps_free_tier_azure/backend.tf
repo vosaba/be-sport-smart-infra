@@ -3,7 +3,6 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
-
 terraform {
   required_version = ">= 1.1.7, < 2.0.0"
 
@@ -26,7 +25,7 @@ terraform {
     resource_group_name   = "common-resource-group"
     storage_account_name  = "abasovstorage"
     container_name        = "common-blob"
-    key                   = "production_3.terraform.tfstate"
+    key                   = "two_app_free.terraform.tfstate"
   }
 }
 
