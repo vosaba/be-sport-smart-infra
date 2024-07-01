@@ -28,6 +28,8 @@ resource "azurerm_linux_web_app" "web" {
   https_only          = true
   tags                = var.tags
 
+  ftp_publish_basic_authentication_enabled = true
+
   site_config {
     always_on         = var.always_on
     use_32_bit_worker = var.use_32_bit_worker
