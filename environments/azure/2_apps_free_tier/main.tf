@@ -131,7 +131,7 @@ module "frontend_app" {
 # ------------------------------------------------------------------------------------------------------
 module "backend_app" {
   source         = "../../../modules/azure/app_service_dotnet"
-  location       = var.location
+  location       = var.apps_location
   rg_name        = azurerm_resource_group.rg.name
   resource_token = local.resource_token
   always_on      = false
