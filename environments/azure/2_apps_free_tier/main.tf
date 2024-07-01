@@ -58,29 +58,34 @@ module "key_vault" {
   rg_name                  = azurerm_resource_group.rg.name
   tags                     = azurerm_resource_group.rg.tags
   resource_token           = local.resource_token
-  access_policy_object_ids = [module.api.IDENTITY_PRINCIPAL_ID]
+  access_policy_object_ids = [module.backend_app.IDENTITY_PRINCIPAL_ID]
   secrets = [
     {
       name  = local.pg_username
-      value = module.postgresql_server.AZURE_PG_USERNAME
+      value = module.postgresql_flexible_server.AZURE_PG_USERNAME
     },
     {
       name  = local.pg_password
-      value = module.postgresql_server.AZURE_PG_PASSWORD
+      value = module.postgresql_flexible_server.AZURE_PG_PASSWORD
     }
   ]
 }
 
 # ------------------------------------------------------------------------------------------------------
-# Deploy postgresql server
+# Deploy postgresql flexible server
 # ------------------------------------------------------------------------------------------------------
-module "postgresql_server" {
-  source         = "../../../modules/azure/postgresql_server"
+module "postgresql_flexible_server" {
+  source         = "../../../modules/azure/postgresql_flexible_server"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   tags           = azurerm_resource_group.rg.tags
   resource_token = local.resource_token
-  sku_name       = "B1MS"
+
+  # Free tier option
+  sku_name       = "B_Standard_B1ms"
+  storage_mb     = 32768
+  storage_tier   = "P4"
+
   db_names       = ["BeSportSmart_Core", "BeSportSmart_Identity"]
 }
 
@@ -89,9 +94,11 @@ module "postgresql_server" {
 # ------------------------------------------------------------------------------------------------------
 module "app_service_plan" {
   source         = "../../../modules/azure/app_service_plan"
-  location       = var.location
+  location       = var.apps_location
   rg_name        = azurerm_resource_group.rg.name
   tags           = azurerm_resource_group.rg.tags
+
+  # Free tier option
   sku_name       = "F1"
   resource_token = local.resource_token
 }
@@ -101,13 +108,15 @@ module "app_service_plan" {
 # ------------------------------------------------------------------------------------------------------
 module "frontend_app" {
   source         = "../../../modules/azure/app_service_node"
-  location       = var.location
+  location       = var.apps_location
   rg_name        = azurerm_resource_group.rg.name
   resource_token = local.resource_token
+  always_on      = false
 
   tags               = merge(local.tags, { azd-service-name : "frontend_app" })
   service_name       = "frontend_app"
   appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
+  use_32_bit_worker  = true
 
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
@@ -125,16 +134,18 @@ module "backend_app" {
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   resource_token = local.resource_token
+  always_on      = false
 
   tags               = merge(local.tags, { "azd-service-name" : "backend_app" })
   service_name       = "backend_app"
   appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
+  use_32_bit_worker  = true
 
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
     "ENABLE_ORYX_BUILD"                     = "True"
     "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.applicationinsights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
 
   # app_command_line = local.backend_app_command_line

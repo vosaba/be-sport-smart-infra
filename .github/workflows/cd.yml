@@ -5,10 +5,23 @@ on:
     branches:
       - main
 
+env:
+  TERRAFORM_VERSION: '1.9.0'
+  WORKING_DIRECTORY: 'environments/azure/2_apps_free_tier'
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
 jobs:
   terraform-plan:
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -16,31 +29,24 @@ jobs:
     - name: 'Setup Terraform'
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: 1.1.7
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
     - name: 'Terraform Init'
       run: terraform init
-      working-directory: terraform/environments/production
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
     - name: 'Terraform Plan'
       run: terraform plan
-      working-directory: terraform/environments/production
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
   terraform-apply:
     name: 'Terraform Apply'
     runs-on: ubuntu-latest
     environment: production
     needs: terraform-plan
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -48,31 +54,13 @@ jobs:
     - name: 'Setup Terraform'
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: 1.1.7
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-    # need to az login task here using (ecrets.ARM_CLIENT_ID, ecrets.ARM_CLIENT_SECRET, secrets.ARM_SUBSCRIPTION_ID, secrets.ARM_TENANT_ID)
     - name: 'Azure Login'
-      run: az login --service-principal -u ${{ secrets.ARM_CLIENT_ID }} -p ${{ secrets.ARM_CLIENT_SECRET }} --tenant ${{ secrets.ARM_TENANT_ID }}
-      # env:
-      #   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      #   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      #   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      #   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      run: az login --service-principal -u ${{ env.ARM_CLIENT_ID }} -p ${{ env.ARM_CLIENT_SECRET }} --tenant ${{ env.ARM_TENANT_ID }}
 
     - name: 'Terraform Init'
       run: terraform init
-      working-directory: terraform/environments/production
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
     - name: 'Terraform Apply'
       run: terraform apply -auto-approve
-      working-directory: terraform/environments/production
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}

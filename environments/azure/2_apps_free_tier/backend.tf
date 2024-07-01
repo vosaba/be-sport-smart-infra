@@ -1,5 +1,9 @@
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
   skip_provider_registration = true
 }
 
@@ -8,16 +12,16 @@ terraform {
 
   required_providers {
     azurerm = {
-      version = "~>3.97.1"
+      version = "~> 3.109.0"
       source  = "hashicorp/azurerm"
     }
     azurecaf = {
       source  = "aztfmod/azurecaf"
-      version = "~>1.2.24"
+      version = "~> 1.2.28"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.0"
+      version = "~> 3.5.0"
     }
   }
 

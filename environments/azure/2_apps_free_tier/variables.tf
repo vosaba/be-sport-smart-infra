@@ -8,6 +8,12 @@ variable "location" {
   type        = string
 }
 
+variable "apps_location" {
+  description = "Azure region where the apps should be created"
+  type        = string
+  
+}
+
 variable "bss_name_prefix" {
   description = "Name prefix used for Be Sport Smart resources"
   type        = string
