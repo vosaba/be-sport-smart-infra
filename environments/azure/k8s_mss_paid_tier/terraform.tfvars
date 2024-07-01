@@ -1,4 +1,4 @@
-environment     = "k8s-mss-paid-services"
+environment     = "k8s-mss-paid-tier"
 rg_location     = "East US"
 la_rg_name      = "leonid-abasov"
 la_arc_name     = "leonidabasov"

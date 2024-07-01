@@ -1,19 +1,19 @@
 module "la_resource_group" {
-  source      = "../../modules/resource_group"
+  source      = "../../../modules/azure/resource_group"
   location    = var.rg_location
   name        = var.la_rg_name
   environment = var.environment
 }
 
 module "bss_resource_group" {
-  source      = "../../modules/resource_group"
+  source      = "../../../modules/azure/resource_group"
   location    = var.rg_location
   name        = var.bss_name_prefix
   environment = var.environment
 }
 
 module "bss_virtual_network" {
-  source      = "../../modules/virtual_network"
+  source      = "../../../modules/azure/virtual_network"
   rg_name     = module.bss_resource_group.rg_name
   location    = module.bss_resource_group.rg_location
   name        = var.bss_name_prefix
@@ -33,7 +33,7 @@ module "bss_virtual_network" {
 }
 
 # module "bss_appgw" {
-#   source               = "../../modules/application_gateway"
+#   source               = "../../../modules/azure/application_gateway"
 #   rg_name              = module.bss_resource_group.rg_name
 #   location             = module.bss_resource_group.rg_location
 #   appgw_name           = var.bss_name_prefix
@@ -47,7 +47,7 @@ module "bss_virtual_network" {
 # }
 
 module "bss_k8s" {
-  source                     = "../../modules/aks"
+  source                     = "../../../modules/azure/aks"
   rg_id                      = module.bss_resource_group.rg_id
   rg_name                    = module.bss_resource_group.rg_name
   location                   = module.bss_resource_group.rg_location
@@ -63,7 +63,7 @@ module "bss_k8s" {
 }
 
 module "la_acr" {
-  source      = "../../modules/container_registry"
+  source      = "../../../modules/azure/container_registry"
   rg_name     = module.la_resource_group.rg_name
   location    = module.la_resource_group.rg_location
   name        = var.la_arc_name
@@ -79,7 +79,7 @@ module "la_acr" {
 }
 
 module "bss_key_vault" {
-  source      = "../../modules/key_vault"
+  source      = "../../../modules/azure/key_vault"
   rg_name     = module.bss_resource_group.rg_name
   location    = module.bss_resource_group.rg_location
   secrets     = []

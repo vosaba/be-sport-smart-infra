@@ -1,10 +1,10 @@
 locals {
-  tags                         = { env-name : var.environment }
-  sha                          = base64encode(sha256("${var.environment}${var.location}${data.azurerm_client_config.current.subscription_id}"))
-  resource_token               = var.bss_name_prefix
+  tags           = { env-name : var.environment }
+  sha            = base64encode(sha256("${var.environment}${var.location}${data.azurerm_client_config.current.subscription_id}"))
+  resource_token = var.bss_name_prefix
   # backend_app_command_line             = "gunicorn --workers 4 --threads 2 --timeout 60 --access-logfile \"-\" --error-logfile \"-\" --bind=0.0.0.0:8000 -k uvicorn.workers.UvicornWorker todo.app:app"
-  pg_username                  = "AZURE-PG-USERNAME"
-  pg_password                  = "AZURE-PG-PASSWORD"
+  pg_username = "AZURE-PG-USERNAME"
+  pg_password = "AZURE-PG-PASSWORD"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ resource "azurerm_resource_group" "rg" {
 # Deploy application insights
 # ------------------------------------------------------------------------------------------------------
 module "application_insights" {
-  source           = "../../modules/application_insights"
+  source           = "../../../modules/azure/application_insights"
   location         = var.location
   rg_name          = azurerm_resource_group.rg.name
   environment_name = var.environment
@@ -41,7 +41,7 @@ module "application_insights" {
 # Deploy log analytics
 # ------------------------------------------------------------------------------------------------------
 module "log_analytics" {
-  source         = "../../modules/log_analytics"
+  source         = "../../../modules/azure/log_analytics"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   tags           = azurerm_resource_group.rg.tags
@@ -52,7 +52,7 @@ module "log_analytics" {
 # Deploy key vault
 # ------------------------------------------------------------------------------------------------------
 module "key_vault" {
-  source                   = "../../modules/key_vault"
+  source                   = "../../../modules/azure/key_vault"
   location                 = var.location
   principal_id             = data.azurerm_client_config.current.object_id
   rg_name                  = azurerm_resource_group.rg.name
@@ -75,20 +75,20 @@ module "key_vault" {
 # Deploy postgresql server
 # ------------------------------------------------------------------------------------------------------
 module "postgresql_server" {
-  source         = "../../modules/postgresql_server"
+  source         = "../../../modules/azure/postgresql_server"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   tags           = azurerm_resource_group.rg.tags
   resource_token = local.resource_token
   sku_name       = "B1MS"
-  db_names       = ["BeSportSmart"]
+  db_names       = ["BeSportSmart_Core", "BeSportSmart_Identity"]
 }
 
 # ------------------------------------------------------------------------------------------------------
 # Deploy app service plan
 # ------------------------------------------------------------------------------------------------------
 module "app_service_plan" {
-  source         = "../../modules/app_service_plan"
+  source         = "../../../modules/azure/app_service_plan"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   tags           = azurerm_resource_group.rg.tags
@@ -100,7 +100,7 @@ module "app_service_plan" {
 # Deploy front-end app
 # ------------------------------------------------------------------------------------------------------
 module "frontend_app" {
-  source         = "../../modules/app_service_node"
+  source         = "../../../modules/azure/app_service_node"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   resource_token = local.resource_token
@@ -110,8 +110,8 @@ module "frontend_app" {
   appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
 
   app_settings = {
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
-    "ENABLE_ORYX_BUILD"                     = "True"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
+    "ENABLE_ORYX_BUILD"              = "True"
   }
 
   app_command_line = "pm2 serve /home/site/wwwroot --no-daemon --spa"
@@ -121,7 +121,7 @@ module "frontend_app" {
 # Deploy back-end app
 # ------------------------------------------------------------------------------------------------------
 module "backend_app" {
-  source         = "../../modules/app_service_dotnet"
+  source         = "../../../modules/azure/app_service_dotnet"
   location       = var.location
   rg_name        = azurerm_resource_group.rg.name
   resource_token = local.resource_token

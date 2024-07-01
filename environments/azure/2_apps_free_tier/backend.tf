@@ -22,10 +22,10 @@ terraform {
   }
 
   backend "azurerm" {
-    resource_group_name   = "common-resource-group"
-    storage_account_name  = "abasovstorage"
-    container_name        = "common-blob"
-    key                   = "two_app_free.terraform.tfstate"
+    resource_group_name   = "common-rg"
+    storage_account_name  = "abasovcommonstorage"
+    container_name        = "terraform-state-container"
+    key                   = "2_apps_free_tier.terraform.tfstate"
   }
 }
 
