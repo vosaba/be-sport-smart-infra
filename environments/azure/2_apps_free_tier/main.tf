@@ -113,8 +113,8 @@ module "frontend_app" {
   resource_token = local.resource_token
   always_on      = false
 
-  tags               = merge(local.tags, { azd-service-name : "frontend_app" })
-  service_name       = "frontend_app"
+  tags               = merge(local.tags, { azd-service-name : "frontend" })
+  service_name       = "frontend"
   appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
   use_32_bit_worker  = true
 
@@ -136,8 +136,8 @@ module "backend_app" {
   resource_token = local.resource_token
   always_on      = false
 
-  tags               = merge(local.tags, { "azd-service-name" : "backend_app" })
-  service_name       = "backend_app"
+  tags               = merge(local.tags, { "azd-service-name" : "backend" })
+  service_name       = "backend"
   appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
   use_32_bit_worker  = true
 
@@ -146,6 +146,7 @@ module "backend_app" {
     "ENABLE_ORYX_BUILD"                     = "True"
     "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    "API_ALLOW_ORIGINS"                     = module.frontend_app.URI
   }
 
   # app_command_line = local.backend_app_command_line
