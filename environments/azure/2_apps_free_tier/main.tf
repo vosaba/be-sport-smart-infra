@@ -165,3 +165,16 @@ resource "null_resource" "backend_app_set_allow_origins" {
     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.backend_app.APPSERVICE_NAME} --settings API_ALLOW_ORIGINS=${module.frontend_app.URI}"
   }
 }
+
+# ------------------------------------------------------------------------------------------------------
+# Deploy publishing profile for backend app and store it in key vault
+# ------------------------------------------------------------------------------------------------------
+resource "null_resource" "get_publishing_profile" {
+  provisioner "local-exec" {
+    command = <<EOT
+    az webapp deployment list-publishing-profiles --name ${module.backend_app.APPSERVICE_NAME} --resource-group ${azurerm_resource_group.rg.name} --output json > publishProfile.json
+    az keyvault secret set --vault-name ${module.key_vault.NAME} --name "${module.backend_app.APPSERVICE_NAME}-publish-profile" --file publishProfile.json
+    EOT
+  }
+  depends_on = [module.backend_app, module.key_vault]
+}
