@@ -125,10 +125,6 @@ module "frontend_app" {
 
   identity_type = "SystemAssigned"
 
-  # user_assigned_identity_ids = [
-  #   azurerm_user_assigned_identity.web_app_identity.id
-  # ]
-
   app_command_line = "pm2 serve /home/site/wwwroot --no-daemon --spa"
 }
 
@@ -155,12 +151,9 @@ module "backend_app" {
     "API_ALLOW_ORIGINS"                     = module.frontend_app.URI
   }
 
-  # app_command_line = local.backend_app_command_line
   identity_type = "SystemAssigned"
 
-  # user_assigned_identity_ids = [
-  #   azurerm_user_assigned_identity.web_app_identity.id
-  # ]
+  # app_command_line = local.backend_app_command_line
 }
 
 # Workaround: set API_ALLOW_ORIGINS to the frontend_app URI
@@ -177,70 +170,81 @@ resource "null_resource" "backend_app_set_allow_origins" {
 # ------------------------------------------------------------------------------------------------------
 # Create User-assigned Identity for web apps deployment
 # ------------------------------------------------------------------------------------------------------
-resource "azurecaf_name" "identity_name" {
-  name          = "deployment-identity"
-  resource_type = "azurerm_user_assigned_identity"
-  random_length = 0
-  clean_input   = true
-}
-
-resource "azurerm_user_assigned_identity" "web_app_deployment_identity" {
-  name                = azurecaf_name.identity_name.result
+module "web_app_deployment_identity" {
+  source              = "../../../modules/azure/user_assigned_identity"
+  identity_name       = "deployment-identity"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
-}
 
-resource "azurerm_role_assignment" "backend_app_identity_contributor" {
-  principal_id         = azurerm_user_assigned_identity.web_app_deployment_identity.principal_id
-  role_definition_name = "Website Contributor"
-  scope                = module.backend_app.ID
-}
-
-resource "azurerm_role_assignment" "frontend_app_identity_contributor" {
-  principal_id         = azurerm_user_assigned_identity.web_app_deployment_identity.principal_id
-  role_definition_name = "Website Contributor"
-  scope                = module.frontend_app.ID
+  role_assignments = [
+    {
+      role_definition_name = "Website Contributor"
+      scope                = module.backend_app.ID
+    },
+    {
+      role_definition_name = "Website Contributor"
+      scope                = module.frontend_app.ID
+    }
+  ]
 }
 
 # ------------------------------------------------------------------------------------------------------
-# Configure back-end app source control
+# Configure source control and deployment
 # ------------------------------------------------------------------------------------------------------
-resource "azurerm_app_service_source_control" "backend_app_source_control" {
-  app_id                 = module.backend_app.ID
-  repo_url               = "https://github.com/vosaba/be-sport-smart-backend"
-  branch                 = "main"
-  use_manual_integration = true
-
-  # github_action_configuration {
-  #   code_configuration {
-  #     runtime_stack   = "dotnetcore"
-  #     runtime_version = "8.0"
-  #   }
-
-  #   generate_workflow_file = false                  TODO check web contributor how was created
-  # }
-}
-
 resource "azurerm_source_control_token" "source_token" {
   type         = "GitHub"
   token        = var.github_token
   token_secret = var.github_token
 }
 
-resource "azurerm_federated_identity_credential" "backend_app_federated_identity" {
-  name                = "vosaba-be-sport-smart-backend"
-  resource_group_name = azurerm_resource_group.rg.name
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
-  subject             = "repo:vosaba/be-sport-smart-backend:environment:production"
+module "backend_app_source_control" {
+  source              = "../../../modules/azure/app_service_source_control"
+  rg_name             = azurerm_resource_group.rg.name
+  organization        = "vosaba"
+  repository          = "be-sport-smart-backend"
+  branch              = "main"
+  app_identity        = module.backend_app.ID
+  app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
 
-resource "azurerm_federated_identity_credential" "frontend_app_federated_identity" {
-  name                = "vosaba-be-sport-smart-frontend"
-  resource_group_name = azurerm_resource_group.rg.name
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
-  subject             = "repo:vosaba/be-sport-smart-frontend:environment:production"
+module "frontend_app_source_control" {
+  source              = "../../../modules/azure/app_service_source_control"
+  rg_name             = azurerm_resource_group.rg.name
+  organization        = "vosaba"
+  repository          = "be-sport-smart-frontend"
+  branch              = "main"
+  app_identity        = module.frontend_app.ID
+  app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
+
+# resource "azurerm_app_service_source_control" "backend_app_source_control" {
+#   app_id                 = module.backend_app.ID
+#   repo_url               = "https://github.com/vosaba/be-sport-smart-backend"
+#   branch                 = "main"
+#   use_manual_integration = true
+# }
+
+# resource "azurerm_app_service_source_control" "frontend_app_source_control" {
+#   app_id                 = module.backend_app.ID
+#   repo_url               = "https://github.com/vosaba/be-sport-smart-frontend"
+#   branch                 = "main"
+#   use_manual_integration = true
+# }
+
+# resource "azurerm_federated_identity_credential" "backend_app_federated_identity" {
+#   name                = "vosaba-be-sport-smart-backend"
+#   resource_group_name = azurerm_resource_group.rg.name
+#   audience            = ["api://AzureADTokenExchange"]
+#   issuer              = "https://token.actions.githubusercontent.com"
+#   parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
+#   subject             = "repo:vosaba/be-sport-smart-backend:environment:production"
+# }
+
+# resource "azurerm_federated_identity_credential" "frontend_app_federated_identity" {
+#   name                = "vosaba-be-sport-smart-frontend"
+#   resource_group_name = azurerm_resource_group.rg.name
+#   audience            = ["api://AzureADTokenExchange"]
+#   issuer              = "https://token.actions.githubusercontent.com"
+#   parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
+#   subject             = "repo:vosaba/be-sport-smart-frontend:environment:production"
+# }
