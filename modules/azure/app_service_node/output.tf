@@ -1,3 +1,7 @@
+output "ID" {
+  value = azurerm_linux_web_app.web.id
+}
+
 output "URI" {
   value = "https://${azurerm_linux_web_app.web.default_hostname}"
 }

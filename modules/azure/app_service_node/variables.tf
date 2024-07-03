@@ -23,9 +23,15 @@ variable "app_settings" {
   type        = map(string)
 }
 
-variable "identity" {
-  description = "A list of application identity"
-  type        = list(any)
+variable "identity_type" {
+  description = "Specifies the type of Managed Service Identity that should be configured on this Linux Web App."
+  type        = string
+  default     = "SystemAssigned"
+}
+
+variable "user_assigned_identity_ids" {
+  description = "A list of User Assigned Managed Identity IDs to be assigned to this Linux Web App."
+  type        = list(string)
   default     = []
 }
 

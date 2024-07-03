@@ -18,3 +18,9 @@ variable "bss_name_prefix" {
   description = "Name prefix used for Be Sport Smart resources"
   type        = string
 }
+
+variable "github_token" {
+  description = "The GitHub authentication token."
+  type        = string
+  sensitive   = true
+}

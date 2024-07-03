@@ -44,11 +44,9 @@ resource "azurerm_linux_web_app" "web" {
 
   app_settings = var.app_settings
 
-  dynamic "identity" {
-    for_each = { for k, v in var.identity : k => v if var.identity != [] }
-    content {
-      type = identity.value["type"]
-    }
+  identity {
+    type         = var.identity_type
+    identity_ids = var.user_assigned_identity_ids
   }
 
   logs {

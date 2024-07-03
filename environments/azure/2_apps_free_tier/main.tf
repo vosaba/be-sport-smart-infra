@@ -82,21 +82,43 @@ module "postgresql_flexible_server" {
   resource_token = local.resource_token
 
   # Free tier option
-  sku_name       = "B_Standard_B1ms"
-  storage_mb     = 32768
-  storage_tier   = "P4"
+  sku_name     = "B_Standard_B1ms"
+  storage_mb   = 32768
+  storage_tier = "P4"
 
-  db_names       = ["BeSportSmart_Core", "BeSportSmart_Identity"]
+  db_names = ["BeSportSmart_Core", "BeSportSmart_Identity"]
 }
+
+# ------------------------------------------------------------------------------------------------------
+# Create User-assigned Identity for web apps deployment
+# ------------------------------------------------------------------------------------------------------
+resource "azurecaf_name" "identity_name" {
+  name          = "deployment-identity"
+  resource_type = "azurerm_user_assigned_identity"
+  random_length = 0
+  clean_input   = true
+}
+
+resource "azurerm_user_assigned_identity" "web_app_identity" {
+  name                = azurecaf_name.identity_name.result
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+# resource "azurerm_role_assignment" "identity_contributor" {
+#   principal_id         = azurerm_user_assigned_identity.web_app_identity.principal_id
+#   role_definition_name = "Contributor"
+#   scope                = azurerm_resource_group.rg.id
+# }
 
 # ------------------------------------------------------------------------------------------------------
 # Deploy app service plan
 # ------------------------------------------------------------------------------------------------------
 module "app_service_plan" {
-  source         = "../../../modules/azure/app_service_plan"
-  location       = var.apps_location
-  rg_name        = azurerm_resource_group.rg.name
-  tags           = azurerm_resource_group.rg.tags
+  source   = "../../../modules/azure/app_service_plan"
+  location = var.apps_location
+  rg_name  = azurerm_resource_group.rg.name
+  tags     = azurerm_resource_group.rg.tags
 
   # Free tier option
   sku_name       = "F1"
@@ -122,6 +144,12 @@ module "frontend_app" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
     "ENABLE_ORYX_BUILD"              = "True"
   }
+
+  identity_type = "SystemAssigned"
+
+  # user_assigned_identity_ids = [
+  #   azurerm_user_assigned_identity.web_app_identity.id
+  # ]
 
   app_command_line = "pm2 serve /home/site/wwwroot --no-daemon --spa"
 }
@@ -150,9 +178,11 @@ module "backend_app" {
   }
 
   # app_command_line = local.backend_app_command_line
-  identity = [{
-    type = "SystemAssigned"
-  }]
+  identity_type = "SystemAssigned"
+
+  # user_assigned_identity_ids = [
+  #   azurerm_user_assigned_identity.web_app_identity.id
+  # ]
 }
 
 # Workaround: set API_ALLOW_ORIGINS to the frontend_app URI
@@ -167,14 +197,35 @@ resource "null_resource" "backend_app_set_allow_origins" {
 }
 
 # ------------------------------------------------------------------------------------------------------
-# Deploy publishing profile for backend app and store it in key vault
+# Configure back-end app source control
 # ------------------------------------------------------------------------------------------------------
-resource "null_resource" "get_publishing_profile" {
-  provisioner "local-exec" {
-    command = <<EOT
-    az webapp deployment list-publishing-profiles --name ${module.backend_app.APPSERVICE_NAME} --resource-group ${azurerm_resource_group.rg.name} --output json > publishProfile.json
-    az keyvault secret set --vault-name ${module.key_vault.NAME} --name "${module.backend_app.APPSERVICE_NAME}-publish-profile" --file publishProfile.json
-    EOT
-  }
-  depends_on = [module.backend_app, module.key_vault]
+resource "azurerm_app_service_source_control" "backend_app_source_control" {
+  app_id                 = module.backend_app.ID
+  repo_url               = "https://github.com/vosaba/be-sport-smart-backend"
+  branch                 = "main"
+  use_manual_integration = true
+
+  # github_action_configuration {
+  #   code_configuration {
+  #     runtime_stack   = "dotnetcore"
+  #     runtime_version = "8.0"
+  #   }
+
+  #   generate_workflow_file = false
+  # }
+}
+
+resource "azurerm_source_control_token" "source_token" {
+  type         = "GitHub"
+  token        = var.github_token
+  token_secret = var.github_token
+}
+
+resource "azurerm_federated_identity_credential" "example" {
+  name                = "vosaba-be-sport-smart-backend"
+  resource_group_name = azurerm_resource_group.rg.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  parent_id           = azurerm_user_assigned_identity.web_app_identity.id
+  subject             = "repo:vosaba/be-sport-smart-backend:environment:production"
 }
