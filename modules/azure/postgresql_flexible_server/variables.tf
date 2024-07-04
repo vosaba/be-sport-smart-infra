@@ -46,3 +46,15 @@ variable "storage_tier" {
   type        = string
   default     = "P4"
 }
+
+variable "allow_azure_access" {
+  description = "Allow access from Azure services"
+  type        = bool
+  default     = true
+}
+
+variable "allowed_ip_list" {
+  description = "List of I.P addresses allowed to through firewall"
+  type        = list(string)
+  default     = []
+}

@@ -1,12 +1,24 @@
+resource "random_password" "backend_app_admin_password" {
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+}
+
 locals {
-  tags           = { env-name : var.environment }
-  sha            = base64encode(sha256("${var.environment}${var.location}${data.azurerm_client_config.current.subscription_id}"))
-  resource_token = var.bss_name_prefix
-  # backend_app_command_line             = "gunicorn --workers 4 --threads 2 --timeout 60 --access-logfile \"-\" --error-logfile \"-\" --bind=0.0.0.0:8000 -k uvicorn.workers.UvicornWorker todo.app:app"
-  pg_username      = "AZURE-PG-USERNAME"
-  pg_password      = "AZURE-PG-PASSWORD"
-  core_db_name     = "BeSportSmart_Core"
-  identity_db_name = "BeSportSmart_Identity"
+  tags               = { env-name : var.environment }
+  sha                = base64encode(sha256("${var.environment}${var.location}${data.azurerm_client_config.current.subscription_id}"))
+  resource_token     = var.bss_name_prefix
+  pg_username_key    = "AZURE-PG-USERNAME"
+  pg_password_key    = "AZURE-PG-PASSWORD"
+  core_db_name       = "BeSportSmart_Core"
+  identity_db_name   = "BeSportSmart_Identity"
+  pg_allowed_ip_list = ["76.31.141.141"]
+
+  backend_app_admin_password_key = "BSS-BACKEND-APP-ADMIN-PASSWORD"
+  backend_app_admin_password     = random_password.backend_app_admin_password.result
+
+  backend_app_command_line = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -63,12 +75,16 @@ module "key_vault" {
   access_policy_object_ids = [module.backend_app.IDENTITY_PRINCIPAL_ID]
   secrets = [
     {
-      name  = local.pg_username
+      name  = local.pg_username_key
       value = module.postgresql_flexible_server.AZURE_PG_USERNAME
     },
     {
-      name  = local.pg_password
+      name  = local.pg_password_key
       value = module.postgresql_flexible_server.AZURE_PG_PASSWORD
+    },
+    {
+      name  = local.backend_app_admin_password_key
+      value = local.backend_app_admin_password
     }
   ]
 }
@@ -88,7 +104,8 @@ module "postgresql_flexible_server" {
   storage_mb   = 32768
   storage_tier = "P4"
 
-  db_names = [local.core_db_name, local.identity_db_name]
+  db_names        = [local.core_db_name, local.identity_db_name]
+  allowed_ip_list = local.pg_allowed_ip_list
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -146,30 +163,32 @@ module "backend_app" {
   use_32_bit_worker  = true
 
   app_settings = {
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
-    "ENABLE_ORYX_BUILD"                     = "True"
-    "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
-    "API_ALLOW_ORIGINS"                     = module.frontend_app.URI
-    "BssDal__ConnectionStrings__BssCore"    = <<-EOT
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"         = "False"
+    "ENABLE_ORYX_BUILD"                      = "True"
+    "AZURE_KEY_VAULT_ENDPOINT"               = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
+    "APPLICATIONINSIGHTS_CONNECTION_STRING"  = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    "API_ALLOW_ORIGINS"                      = module.frontend_app.URI
+    "BssDal__ConnectionStrings__BssCore"     = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.core_db_name};
       Port=5432;
       User Id=${module.postgresql_flexible_server.AZURE_PG_USERNAME};
       Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
     EOT
-    "BssDal__ConnectionStrings__BssIdentity"    = <<-EOT
+    "BssDal__ConnectionStrings__BssIdentity" = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.identity_db_name};
       Port=5432;
       User Id=${module.postgresql_flexible_server.AZURE_PG_USERNAME};
       Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
     EOT
+
+    "BssIdentityInitializer__SuperAdminPassword" = local.backend_app_admin_password
   }
 
   identity_type = "SystemAssigned"
 
-  # app_command_line = local.backend_app_command_line
+  app_command_line = local.backend_app_command_line
 }
 
 # Workaround: set API_ALLOW_ORIGINS to the frontend_app URI

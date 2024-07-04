@@ -46,3 +46,19 @@ resource "azurerm_postgresql_flexible_server" "postgres_flexible_server" {
 
   tags = var.tags
 }
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_access" {
+  count            = var.allow_azure_access ? 1 : 0
+  name             = "allow-access-from-azure-services"
+  server_id        = azurerm_postgresql_flexible_server.postgres_flexible_server.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allowed_ips" {
+  count            = length(var.allowed_ip_list)
+  name             = "allowed_ip_${count.index}"
+  server_id        = azurerm_postgresql_flexible_server.postgres_flexible_server.id
+  start_ip_address = var.allowed_ip_list[count.index]
+  end_ip_address   = var.allowed_ip_list[count.index]
+}
