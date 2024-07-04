@@ -3,8 +3,10 @@ locals {
   sha            = base64encode(sha256("${var.environment}${var.location}${data.azurerm_client_config.current.subscription_id}"))
   resource_token = var.bss_name_prefix
   # backend_app_command_line             = "gunicorn --workers 4 --threads 2 --timeout 60 --access-logfile \"-\" --error-logfile \"-\" --bind=0.0.0.0:8000 -k uvicorn.workers.UvicornWorker todo.app:app"
-  pg_username = "AZURE-PG-USERNAME"
-  pg_password = "AZURE-PG-PASSWORD"
+  pg_username      = "AZURE-PG-USERNAME"
+  pg_password      = "AZURE-PG-PASSWORD"
+  core_db_name     = "BeSportSmart_Core"
+  identity_db_name = "BeSportSmart_Identity"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -86,7 +88,7 @@ module "postgresql_flexible_server" {
   storage_mb   = 32768
   storage_tier = "P4"
 
-  db_names = ["BeSportSmart_Core", "BeSportSmart_Identity"]
+  db_names = [local.core_db_name, local.identity_db_name]
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -149,6 +151,13 @@ module "backend_app" {
     "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
     "API_ALLOW_ORIGINS"                     = module.frontend_app.URI
+    "BssDal__ConnectionStrings__BssCore"    = <<-EOT
+      Server=${module.postgresql_flexible_server.AZURE_PG_NAME};
+      Database=${local.core_db_name};
+      Port=5432;
+      User Id=${module.postgresql_flexible_server.AZURE_PG_USERNAME};
+      Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
+    EOT
   }
 
   identity_type = "SystemAssigned"
