@@ -152,8 +152,15 @@ module "backend_app" {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
     "API_ALLOW_ORIGINS"                     = module.frontend_app.URI
     "BssDal__ConnectionStrings__BssCore"    = <<-EOT
-      Server=${module.postgresql_flexible_server.AZURE_PG_NAME};
+      Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.core_db_name};
+      Port=5432;
+      User Id=${module.postgresql_flexible_server.AZURE_PG_USERNAME};
+      Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
+    EOT
+    "BssDal__ConnectionStrings__BssIdentity"    = <<-EOT
+      Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
+      Database=${local.identity_db_name};
       Port=5432;
       User Id=${module.postgresql_flexible_server.AZURE_PG_USERNAME};
       Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
