@@ -216,35 +216,3 @@ module "frontend_app_source_control" {
   app_identity        = module.frontend_app.ID
   app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
-
-# resource "azurerm_app_service_source_control" "backend_app_source_control" {
-#   app_id                 = module.backend_app.ID
-#   repo_url               = "https://github.com/vosaba/be-sport-smart-backend"
-#   branch                 = "main"
-#   use_manual_integration = true
-# }
-
-# resource "azurerm_app_service_source_control" "frontend_app_source_control" {
-#   app_id                 = module.backend_app.ID
-#   repo_url               = "https://github.com/vosaba/be-sport-smart-frontend"
-#   branch                 = "main"
-#   use_manual_integration = true
-# }
-
-# resource "azurerm_federated_identity_credential" "backend_app_federated_identity" {
-#   name                = "vosaba-be-sport-smart-backend"
-#   resource_group_name = azurerm_resource_group.rg.name
-#   audience            = ["api://AzureADTokenExchange"]
-#   issuer              = "https://token.actions.githubusercontent.com"
-#   parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
-#   subject             = "repo:vosaba/be-sport-smart-backend:environment:production"
-# }
-
-# resource "azurerm_federated_identity_credential" "frontend_app_federated_identity" {
-#   name                = "vosaba-be-sport-smart-frontend"
-#   resource_group_name = azurerm_resource_group.rg.name
-#   audience            = ["api://AzureADTokenExchange"]
-#   issuer              = "https://token.actions.githubusercontent.com"
-#   parent_id           = azurerm_user_assigned_identity.web_app_deployment_identity.id
-#   subject             = "repo:vosaba/be-sport-smart-frontend:environment:production"
-# }

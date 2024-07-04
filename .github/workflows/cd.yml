@@ -1,4 +1,4 @@
-name: 'Terraform CD'
+name: 'Continuous Deployment'
 
 on:
   push:
@@ -12,6 +12,7 @@ env:
   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  # GitHub Actions does not allow to use name of the secret that starts with 'GITHUB' :)
   TF_VAR_github_token: ${{ secrets.NOT_GITHUB_TOKEN }}
 
 jobs:

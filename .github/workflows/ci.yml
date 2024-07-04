@@ -1,4 +1,4 @@
-name: 'Terraform CI'
+name: 'Continuous Integration'
 
 on:
   pull_request:
@@ -16,6 +16,7 @@ env:
 jobs:
   terraform:
     name: 'Terraform Plan'
+
     runs-on: ubuntu-latest
     defaults:
       run:
