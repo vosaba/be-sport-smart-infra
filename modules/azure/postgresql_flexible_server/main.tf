@@ -32,15 +32,15 @@ resource "azurerm_postgresql_flexible_server" "postgres_flexible_server" {
   location            = var.location
   resource_group_name = var.rg_name
 
-  sku_name            = var.sku_name
-  storage_mb          = var.storage_mb
-  storage_tier        = var.storage_tier
+  sku_name     = var.sku_name
+  storage_mb   = var.storage_mb
+  storage_tier = var.storage_tier
 
-  version             = var.pg_version
-  administrator_login = random_string.username.result
+  version                = var.pg_version
+  administrator_login    = random_string.username.result
   administrator_password = random_password.password.result
 
-  backup_retention_days = 7
+  backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   zone                         = 1
 
@@ -61,4 +61,16 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allowed_ips" {
   server_id        = azurerm_postgresql_flexible_server.postgres_flexible_server.id
   start_ip_address = var.allowed_ip_list[count.index]
   end_ip_address   = var.allowed_ip_list[count.index]
+}
+
+resource "azurerm_postgresql_flexible_server_database" "example" {
+  for_each  = toset(var.db_names)
+  name      = each.value
+  server_id = azurerm_postgresql_flexible_server.postgres_flexible_server.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
