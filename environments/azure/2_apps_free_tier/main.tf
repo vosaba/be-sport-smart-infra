@@ -143,9 +143,10 @@ module "frontend_app" {
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
     "ENABLE_ORYX_BUILD"              = "True"
-
-    "DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    
+    # Only 'VITE_' prefixed variables are exposed to the front-end app due to security reasons
+    "VITE_DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
+    "VITE_APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
 
   identity_type = "SystemAssigned"
@@ -204,7 +205,7 @@ resource "null_resource" "frontend_app_set_backend_url" {
   }
 
   provisioner "local-exec" {
-    command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings BACKEND_BASE_URL=${module.backend_app.URI}"
+    command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
   }
 }
 
