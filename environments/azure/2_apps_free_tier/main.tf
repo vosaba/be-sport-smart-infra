@@ -144,7 +144,6 @@ module "frontend_app" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
     "ENABLE_ORYX_BUILD"              = "True"
 
-    "BACKEND_BASE_URL"                      = module.backend_app.URI
     "DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
@@ -198,16 +197,27 @@ module "backend_app" {
   app_command_line = local.backend_app_command_line
 }
 
-# Workaround: set API_ALLOW_ORIGINS to the frontend_app URI
-resource "null_resource" "backend_app_set_allow_origins" {
+# Workaround: set BACKEND_BASE_URL to the backend_app URI after both apps are deployed
+resource "null_resource" "frontend_app_set_backend_url" {
   triggers = {
-    web_uri = module.frontend_app.URI
+    web_uri = module.backend_app.URI
   }
 
   provisioner "local-exec" {
-    command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.backend_app.APPSERVICE_NAME} --settings API_ALLOW_ORIGINS=${module.frontend_app.URI}"
+    command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings BACKEND_BASE_URL=${module.backend_app.URI}"
   }
 }
+
+# # Workaround: set API_ALLOW_ORIGINS to the frontend_app URI
+# resource "null_resource" "backend_app_set_allow_origins" {
+#   triggers = {
+#     web_uri = module.frontend_app.URI
+#   }
+
+#   provisioner "local-exec" {
+#     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.backend_app.APPSERVICE_NAME} --settings API_ALLOW_ORIGINS=${module.frontend_app.URI}"
+#   }
+# }
 
 # ------------------------------------------------------------------------------------------------------
 # Create User-assigned Identity for web apps deployment
