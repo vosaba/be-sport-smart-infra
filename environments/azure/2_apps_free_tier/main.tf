@@ -174,7 +174,7 @@ module "backend_app" {
     "ENABLE_ORYX_BUILD"                      = "True"
     "AZURE_KEY_VAULT_ENDPOINT"               = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING"  = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
-    "API_ALLOW_ORIGINS"                      = module.frontend_app.URI
+    "Security__AllowedOrigins__0"            = module.frontend_app.URI
     "BssDal__ConnectionStrings__BssCore"     = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.core_db_name};
