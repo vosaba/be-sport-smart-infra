@@ -18,7 +18,10 @@ locals {
   backend_app_admin_password_key = "BSS-BACKEND-APP-ADMIN-PASSWORD"
   backend_app_admin_password     = random_password.backend_app_admin_password.result
 
-  backend_app_command_line = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
+  frontend_app_command_line = "pm2 serve /home/site/wwwroot/dist --no-daemon --spa"
+  backend_app_command_line  = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
+
+  localization_test_file = "https://api.jsonbin.io/v3/b/667e16dbe41b4d34e40a2652"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -140,11 +143,15 @@ module "frontend_app" {
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
     "ENABLE_ORYX_BUILD"              = "True"
+
+    "BACKEND_BASE_URL"                      = module.backend_app.URI
+    "DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
 
   identity_type = "SystemAssigned"
 
-  app_command_line = "pm2 serve /home/site/wwwroot --no-daemon --spa"
+  app_command_line = local.frontend_app_command_line
 }
 
 # ------------------------------------------------------------------------------------------------------
