@@ -21,9 +21,10 @@ resource "azurerm_storage_account" "storage_account" {
   tags = var.tags
 }
 
-resource "azurerm_storage_container" "blob_container" {
-  name                  = var.container_name
-  storage_account_name  = azurerm_storage_account.storage_account.name
+resource "azurerm_storage_container" "blob_containers" {
+  for_each             = toset(var.container_names)
+  name                 = each.value
+  storage_account_name = azurerm_storage_account.storage_account.name
   container_access_type = "blob"
 }
 

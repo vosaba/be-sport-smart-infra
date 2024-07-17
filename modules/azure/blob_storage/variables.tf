@@ -18,9 +18,9 @@ variable "tags" {
   type        = map(string)
 }
 
-variable "container_name" {
-  description = "Name of the blob container"
-  type        = string
+variable "container_names" {
+  description = "List of container names to be created"
+  type        = list(string)
 }
 
 variable "writer_identity_id" {

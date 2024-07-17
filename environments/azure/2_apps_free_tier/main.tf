@@ -238,7 +238,7 @@ module "blob_storage" {
   location           = var.location
   tags               = local.tags
   resource_token     = local.resource_token
-  container_name     = "localization"
+  container_names    = ["localization", "images"]
   writer_identity_id = module.backend_app.IDENTITY_PRINCIPAL_ID
 }
 
@@ -247,7 +247,7 @@ resource "null_resource" "backend_app_blob_storage_settings" {
   triggers = {
     blob_storage_account_name = module.blob_storage.storage_account_name
     blob_storage_account_key  = module.blob_storage.storage_account_key
-    blob_container_name       = module.blob_storage.blob_container_name
+    blob_container_names      = join(",", module.blob_storage.blob_container_names)
   }
 
   provisioner "local-exec" {
@@ -257,11 +257,10 @@ resource "null_resource" "backend_app_blob_storage_settings" {
         --name ${module.backend_app.APPSERVICE_NAME} \
         --settings BssLocalization__BlobStorage__AccountName=${module.blob_storage.storage_account_name} \
                    BssLocalization__BlobStorage__AccountKey=${module.blob_storage.storage_account_key} \
-                   BssLocalization__BlobStorage__Container=${module.blob_storage.blob_container_name}
+                   BssLocalization__BlobStorage__Containers=${join(",", module.blob_storage.blob_container_names)}
     EOT
   }
 }
-
 
 # ------------------------------------------------------------------------------------------------------
 # Create User-assigned Identity for web apps deployment
