@@ -160,7 +160,7 @@ module "frontend_app" {
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
     "ENABLE_ORYX_BUILD"              = "True"
-    
+
     # Only 'VITE_' prefixed variables are exposed to the front-end app due to security reasons
     "VITE_DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
     "VITE_APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
@@ -187,10 +187,10 @@ module "backend_app" {
   use_32_bit_worker  = true
 
   app_settings = {
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"         = "False"
-    "ENABLE_ORYX_BUILD"                      = "True"
-    "AZURE_KEY_VAULT_ENDPOINT"               = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
-    "APPLICATIONINSIGHTS_CONNECTION_STRING"  = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "False"
+    "ENABLE_ORYX_BUILD"                     = "True"
+    "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
 
     "Security__AllowedOrigins__0"            = module.frontend_app.URI
     "BssDal__ConnectionStrings__BssCore"     = <<-EOT
@@ -228,6 +228,40 @@ resource "null_resource" "frontend_app_set_backend_url" {
     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
   }
 }
+
+# ------------------------------------------------------------------------------------------------------
+# Deploy blob storage
+# ------------------------------------------------------------------------------------------------------
+module "blob_storage" {
+  source             = "../../../modules/azure/blob_storage"
+  rg_name            = azurerm_resource_group.rg.name
+  location           = var.location
+  tags               = local.tags
+  resource_token     = local.resource_token
+  container_name     = "localization"
+  writer_identity_id = module.backend_app.IDENTITY_PRINCIPAL_ID
+}
+
+# Workaround: set blob storage settings to the backend app after the blob storage is deployed
+resource "null_resource" "backend_app_set_blob_storage_settings" {
+  triggers = {
+    blob_storage_account_name = module.blob_storage.storage_account_name
+    blob_storage_account_key  = module.blob_storage.storage_account_key
+    blob_container_name       = module.blob_storage.blob_container_name
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      az webapp config appsettings set \
+        --resource-group ${azurerm_resource_group.rg.name} \
+        --name ${module.backend_app.APPSERVICE_NAME} \
+        --settings BssLocalization__BlobStorage__AccountName=${module.blob_storage.storage_account_name} \
+                   BssLocalization__BlobStorage__AccountKey=${module.blob_storage.storage_account_key} \
+                   BssLocalization__BlobStorage__Container=${module.blob_storage.blob_container_name}
+    EOT
+  }
+}
+
 
 # ------------------------------------------------------------------------------------------------------
 # Create User-assigned Identity for web apps deployment
