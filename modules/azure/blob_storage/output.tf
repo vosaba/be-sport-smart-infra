@@ -11,5 +11,5 @@ output "blob_container_name" {
 }
 
 output "blob_container_url" {
-  value = azurerm_storage_container.blob_container.url
+  value = "https://${azurerm_storage_account.storage_account.name}.blob.core.windows.net/${azurerm_storage_container.blob_container.name}"
 }
