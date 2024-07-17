@@ -28,7 +28,7 @@ resource "azurerm_storage_container" "blob_container" {
 }
 
 resource "azurerm_role_assignment" "write_access" {
-  scope                = azurerm_storage_container.blob_container.id
+  scope                = azurerm_storage_account.storage_account.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.writer_identity_id
 }
