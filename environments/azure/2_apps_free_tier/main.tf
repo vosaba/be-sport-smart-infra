@@ -1,3 +1,8 @@
+resource "random_id" "backend_app_admin_username" {
+  byte_length = 8
+  prefix      = "admin-"
+}
+
 resource "random_password" "backend_app_admin_password" {
   length  = 16
   special = true
@@ -15,6 +20,10 @@ locals {
   identity_db_name   = "BeSportSmart_Identity"
   pg_allowed_ip_list = ["76.31.141.141"]
 
+  backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
+  backend_app_admin_username     = random_id.backend_app_admin_username.hex
+  backend_app_admin_email_key    = "BSS-BACKEND-APP-ADMIN-USERNAME"
+  backend_app_admin_email        = "${random_id.backend_app_admin_username.hex}@example.com"
   backend_app_admin_password_key = "BSS-BACKEND-APP-ADMIN-PASSWORD"
   backend_app_admin_password     = random_password.backend_app_admin_password.result
 
@@ -84,6 +93,14 @@ module "key_vault" {
     {
       name  = local.pg_password_key
       value = module.postgresql_flexible_server.AZURE_PG_PASSWORD
+    },
+    {
+      name  = local.backend_app_admin_username_key
+      value = local.backend_app_admin_username
+    },
+    {
+      name  = local.backend_app_admin_email_key
+      value = local.backend_app_admin_email
     },
     {
       name  = local.backend_app_admin_password_key
@@ -174,6 +191,7 @@ module "backend_app" {
     "ENABLE_ORYX_BUILD"                      = "True"
     "AZURE_KEY_VAULT_ENDPOINT"               = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING"  = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+
     "Security__AllowedOrigins__0"            = module.frontend_app.URI
     "BssDal__ConnectionStrings__BssCore"     = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
@@ -190,6 +208,8 @@ module "backend_app" {
       Password=${module.postgresql_flexible_server.AZURE_PG_PASSWORD};
     EOT
 
+    "BssIdentityInitializer__SuperAdminUserName" = local.backend_app_admin_username
+    "BssIdentityInitializer__SuperAdminEmail"    = local.backend_app_admin_email
     "BssIdentityInitializer__SuperAdminPassword" = local.backend_app_admin_password
   }
 
@@ -208,17 +228,6 @@ resource "null_resource" "frontend_app_set_backend_url" {
     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
   }
 }
-
-# # Workaround: set API_ALLOW_ORIGINS to the frontend_app URI
-# resource "null_resource" "backend_app_set_allow_origins" {
-#   triggers = {
-#     web_uri = module.frontend_app.URI
-#   }
-
-#   provisioner "local-exec" {
-#     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.backend_app.APPSERVICE_NAME} --settings API_ALLOW_ORIGINS=${module.frontend_app.URI}"
-#   }
-# }
 
 # ------------------------------------------------------------------------------------------------------
 # Create User-assigned Identity for web apps deployment
