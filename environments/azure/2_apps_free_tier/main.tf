@@ -243,7 +243,7 @@ module "blob_storage" {
 }
 
 # Workaround: set blob storage settings to the backend app after the blob storage is deployed
-resource "null_resource" "backend_app_set_blob_storage_settings" {
+resource "null_resource" "backend_app_blob_storage_settings" {
   triggers = {
     blob_storage_account_name = module.blob_storage.storage_account_name
     blob_storage_account_key  = module.blob_storage.storage_account_key
