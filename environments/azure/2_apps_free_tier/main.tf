@@ -233,13 +233,14 @@ resource "null_resource" "frontend_app_set_backend_url" {
 # Deploy blob storage
 # ------------------------------------------------------------------------------------------------------
 module "blob_storage" {
-  source             = "../../../modules/azure/blob_storage"
-  rg_name            = azurerm_resource_group.rg.name
-  location           = var.location
-  tags               = local.tags
-  resource_token     = local.resource_token
-  container_names    = ["localization", "images"]
-  writer_identity_id = module.backend_app.IDENTITY_PRINCIPAL_ID
+  source               = "../../../modules/azure/blob_storage"
+  rg_name              = azurerm_resource_group.rg.name
+  location             = var.location
+  tags                 = local.tags
+  resource_token       = local.resource_token
+  container_names      = ["localization", "images"]
+  cors_allowed_origins = [module.frontend_app.URI]
+  writer_identity_id   = module.backend_app.IDENTITY_PRINCIPAL_ID
 }
 
 # Workaround: set blob storage settings to the backend app after the blob storage is deployed

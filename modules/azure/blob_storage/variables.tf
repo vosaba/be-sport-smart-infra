@@ -23,6 +23,11 @@ variable "container_names" {
   type        = list(string)
 }
 
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for CORS"
+  type        = list(string)
+}
+
 variable "writer_identity_id" {
   description = "Principal ID for access control"
   type        = string

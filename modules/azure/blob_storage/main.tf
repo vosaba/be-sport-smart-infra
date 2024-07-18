@@ -18,13 +18,23 @@ resource "azurerm_storage_account" "storage_account" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
+  blob_properties {
+    cors_rule {
+      allowed_headers    = ["*"]
+      allowed_methods    = ["GET", "POST", "PUT"]
+      allowed_origins    = var.cors_allowed_origins
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 3600
+    }
+  }
+
   tags = var.tags
 }
 
 resource "azurerm_storage_container" "blob_containers" {
-  for_each             = toset(var.container_names)
-  name                 = each.value
-  storage_account_name = azurerm_storage_account.storage_account.name
+  for_each              = toset(var.container_names)
+  name                  = each.value
+  storage_account_name  = azurerm_storage_account.storage_account.name
   container_access_type = "blob"
 }
 
