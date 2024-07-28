@@ -355,11 +355,11 @@ resource "github_repository_file" "foo" {
       app_token_key   = local.frontend_static_app_token_key
       app_location    = "/"
       api_location    = ""
-      output_location = ""
+      output_location = "dist"
     }
   )
-  # commit_message      = "Add workflow (by Terraform)"
-  # commit_author       = "vosaba"
-  # commit_email        = "vosaba@test.com"
+  commit_message      = "Add workflow (by Terraform)"
+  commit_author       = "vosaba"
+  commit_email        = "vosaba@example.com"
   overwrite_on_create = true
 }
