@@ -20,6 +20,8 @@ locals {
   identity_db_name   = "BeSportSmart_Identity"
   pg_allowed_ip_list = ["76.31.141.141"]
 
+  frontend_static_app_token_key = "FRONTEND_STATIC_WEB_APPS_API_TOKEN"
+
   backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
   backend_app_admin_username     = random_id.backend_app_admin_username.hex
   backend_app_admin_email_key    = "BSS-BACKEND-APP-ADMIN-USERNAME"
@@ -103,6 +105,10 @@ module "key_vault" {
     {
       name  = local.backend_app_admin_password_key
       value = local.backend_app_admin_password
+    },
+    {
+      name  = local.frontend_static_app_token_key
+      value = module.frontend_static_app.API_KEY
     }
   ]
 }
@@ -291,6 +297,10 @@ module "web_app_deployment_identity" {
     {
       role_definition_name = "Website Contributor"
       scope                = module.frontend_app.ID
+    },
+    {
+      role_definition_name = "Website Contributor"
+      scope                = module.frontend_static_app.ID
     }
   ]
 }
@@ -314,12 +324,41 @@ module "backend_app_source_control" {
   app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
 
-module "frontend_static_app_source_control" {
-  source              = "../../../modules/azure/app_service_source_control"
-  rg_name             = azurerm_resource_group.rg.name
-  organization        = "vosaba"
-  repository          = "be-sport-smart-frontend"
-  branch              = "main"
-  app_identity        = module.frontend_static_app.ID
-  app_deploy_identity = module.web_app_deployment_identity.identity_id
+# module "frontend_static_app_source_control" {
+#   source              = "../../../modules/azure/app_service_source_control"
+#   rg_name             = azurerm_resource_group.rg.name
+#   organization        = "vosaba"
+#   repository          = "be-sport-smart-frontend"
+#   branch              = "main"
+#   app_identity        = module.frontend_static_app.ID
+#   app_deploy_identity = module.web_app_deployment_identity.identity_id
+# }
+
+provider "github" {
+  token = var.github_token
+  owner = var.github_owner
+}
+
+resource "github_actions_secret" "frontend_static_app_secret" {
+  repository      = "be-sport-smart-frontend"
+  secret_name     = local.frontend_static_app_token_key
+  plaintext_value = module.frontend_static_app.API_KEY
+}
+
+resource "github_repository_file" "foo" {
+  repository = "be-sport-smart-frontend"
+  branch     = "main"
+  file       = ".github/workflows/azure-static-web-app.yml"
+  content = templatefile("./templates/azure-static-web-app.tpl",
+    {
+      app_token_key   = local.frontend_static_app_token_key
+      app_location    = "/"
+      api_location    = ""
+      output_location = ""
+    }
+  )
+  # commit_message      = "Add workflow (by Terraform)"
+  # commit_author       = "vosaba"
+  # commit_email        = "vosaba@test.com"
+  overwrite_on_create = true
 }

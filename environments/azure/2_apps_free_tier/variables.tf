@@ -24,3 +24,8 @@ variable "github_token" {
   type        = string
   sensitive   = true
 }
+
+variable "github_owner" {
+  description = "The GitHub owner."
+  type        = string
+}

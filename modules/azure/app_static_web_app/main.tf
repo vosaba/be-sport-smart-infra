@@ -11,7 +11,7 @@ terraform {
   }
 }
 
-resource "azurerm_static_site" "web" {
+resource "azurerm_static_web_app" "web" {
   name                = "${var.service_name}-${var.resource_token}"
   location            = var.location
   resource_group_name = var.rg_name
