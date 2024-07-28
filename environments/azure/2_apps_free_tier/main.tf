@@ -29,8 +29,6 @@ locals {
 
   frontend_app_command_line = "pm2 serve /home/site/wwwroot/dist --no-daemon --spa"
   backend_app_command_line  = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
-
-  localization_test_file = "https://api.jsonbin.io/v3/b/667e16dbe41b4d34e40a2652"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -162,13 +160,26 @@ module "frontend_app" {
     "ENABLE_ORYX_BUILD"              = "True"
 
     # Only 'VITE_' prefixed variables are exposed to the front-end app due to security reasons
-    "VITE_DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
-    "VITE_APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+    # "VITE_DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
+    # "VITE_APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
   }
 
   identity_type = "SystemAssigned"
 
   app_command_line = local.frontend_app_command_line
+}
+
+# ------------------------------------------------------------------------------------------------------
+# Deploy front-end static web app
+# ------------------------------------------------------------------------------------------------------
+module "frontend_static_app" {
+  source         = "../../../modules/azure/app_static_web_app"
+  location       = var.location
+  rg_name        = azurerm_resource_group.rg.name
+  service_name   = "static-frontend"
+  resource_token = local.resource_token
+  tags           = merge(local.tags, { azd-service-name : "static-frontend" })
+  identity_type  = "SystemAssigned"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -303,12 +314,12 @@ module "backend_app_source_control" {
   app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
 
-module "frontend_app_source_control" {
+module "frontend_static_app_source_control" {
   source              = "../../../modules/azure/app_service_source_control"
   rg_name             = azurerm_resource_group.rg.name
   organization        = "vosaba"
   repository          = "be-sport-smart-frontend"
   branch              = "main"
-  app_identity        = module.frontend_app.ID
+  app_identity        = module.frontend_static_app.ID
   app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
