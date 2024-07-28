@@ -22,6 +22,7 @@ locals {
 
   frontend_static_app_token_key       = "FRONTEND_STATIC_WEB_APPS_API_TOKEN"
   frontend_static_app_token_vault_key = "FRONTEND-STATIC-WEB-APPS-API-TOKEN"
+  frontend_static_app_uri             = "https://besportsmart.com"
 
   backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
   backend_app_admin_username     = random_id.backend_app_admin_username.hex
@@ -211,6 +212,7 @@ module "backend_app" {
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
 
     "Security__AllowedOrigins__0"            = module.frontend_static_app.URI
+    "Security__AllowedOrigins__1"            = local.frontend_static_app_uri
     "BssDal__ConnectionStrings__BssCore"     = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.core_db_name};
@@ -257,7 +259,7 @@ module "blob_storage" {
   tags                 = local.tags
   resource_token       = local.resource_token
   container_names      = ["localization", "images"]
-  cors_allowed_origins = [module.frontend_static_app.URI]
+  cors_allowed_origins = [module.frontend_static_app.URI, local.frontend_static_app_uri]
   writer_identity_id   = module.backend_app.IDENTITY_PRINCIPAL_ID
 }
 
