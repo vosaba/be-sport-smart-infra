@@ -2,6 +2,10 @@ output "ID" {
   value = azurerm_static_web_app.web.id
 }
 
+output "URI" {
+  value = "https://${azurerm_static_web_app.web.default_host_name}"
+}
+
 output "default_hostname" {
   value = azurerm_static_web_app.web.default_host_name
 }

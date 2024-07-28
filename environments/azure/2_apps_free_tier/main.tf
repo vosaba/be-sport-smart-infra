@@ -210,7 +210,7 @@ module "backend_app" {
     "AZURE_KEY_VAULT_ENDPOINT"              = module.key_vault.AZURE_KEY_VAULT_ENDPOINT
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
 
-    "Security__AllowedOrigins__0"            = module.frontend_app.URI
+    "Security__AllowedOrigins__0"            = module.frontend_static_app.URI
     "BssDal__ConnectionStrings__BssCore"     = <<-EOT
       Server=${module.postgresql_flexible_server.AZURE_PG_FQDN};
       Database=${local.core_db_name};
@@ -237,15 +237,15 @@ module "backend_app" {
 }
 
 # Workaround: set BACKEND_BASE_URL to the backend_app URI after both apps are deployed
-resource "null_resource" "frontend_app_set_backend_url" {
-  triggers = {
-    web_uri = module.backend_app.URI
-  }
+# resource "null_resource" "frontend_app_set_backend_url" {
+#   triggers = {
+#     web_uri = module.backend_app.URI
+#   }
 
-  provisioner "local-exec" {
-    command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
+#   }
+# }
 
 # ------------------------------------------------------------------------------------------------------
 # Deploy blob storage
@@ -257,7 +257,7 @@ module "blob_storage" {
   tags                 = local.tags
   resource_token       = local.resource_token
   container_names      = ["localization", "images"]
-  cors_allowed_origins = [module.frontend_app.URI]
+  cors_allowed_origins = [module.frontend_static_app.URI]
   writer_identity_id   = module.backend_app.IDENTITY_PRINCIPAL_ID
 }
 
