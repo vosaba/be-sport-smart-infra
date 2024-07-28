@@ -20,7 +20,8 @@ locals {
   identity_db_name   = "BeSportSmart_Identity"
   pg_allowed_ip_list = ["76.31.141.141"]
 
-  frontend_static_app_token_key = "FRONTEND_STATIC_WEB_APPS_API_TOKEN"
+  frontend_static_app_token_key       = "FRONTEND_STATIC_WEB_APPS_API_TOKEN"
+  frontend_static_app_token_vault_key = "FRONTEND-STATIC-WEB-APPS-API-TOKEN"
 
   backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
   backend_app_admin_username     = random_id.backend_app_admin_username.hex
@@ -107,7 +108,7 @@ module "key_vault" {
       value = local.backend_app_admin_password
     },
     {
-      name  = local.frontend_static_app_token_key
+      name  = local.frontend_static_app_token_vault_key
       value = module.frontend_static_app.API_KEY
     }
   ]
