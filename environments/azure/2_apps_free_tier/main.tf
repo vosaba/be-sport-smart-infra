@@ -29,7 +29,7 @@ locals {
   frontend_workflow_dynamic_localization_base_url_key         = "DYNAMIC_LOCALIZATION_BASE_URL"
   frontend_workflow_applicationinsights_connection_string_key = "APPLICATIONINSIGHTS_CONNECTION_STRING"
 
-  github_token_key = "GITHUB_TOKEN"
+  github_token_key = "KEY_GITHUB_TOKEN"
 
   backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
   backend_app_admin_username     = random_id.backend_app_admin_username.hex
@@ -312,7 +312,7 @@ resource "github_actions_secret" "frontend_static_github_token_secret" {
 resource "github_actions_variable" "frontend_static_backend_base_url_variable" {
   repository    = local.frontend_static_app_repository
   variable_name = local.frontend_workflow_backend_base_url_key
-  value         = module.backend_app.APPSERVICE_URL
+  value         = module.backend_app.URI
 }
 
 resource "github_actions_variable" "frontend_static_dynamic_localization_base_url_variable" {
@@ -334,7 +334,7 @@ resource "github_repository_file" "static_web_app_deploy_workflow" {
   repository = local.frontend_static_app_repository
   branch     = "main"
   file       = ".github/workflows/deploy_app.yml"
-  content = templatefile("../../templates/deploy_static_web_app.tpl",
+  content = templatefile("../../../templates/deploy_static_web_app.tpl",
     {
       app_location                              = "/"
       api_location                              = ""

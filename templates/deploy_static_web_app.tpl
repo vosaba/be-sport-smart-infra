@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 env:
-  VITE_BACKEND_BASE_URL: ${{ vars.${ backend_base_url_key } }}
-  VITE_DYNAMIC_LOCALIZATION_BASE_URL: ${{ vars.${ dynamic_localization_base_url_key } }}
-  VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ vars.${ applicationinsights_connection_string_key } }}
+  VITE_BACKEND_BASE_URL: $${{ vars.${ backend_base_url_key } }}
+  VITE_DYNAMIC_LOCALIZATION_BASE_URL: $${{ vars.${ dynamic_localization_base_url_key } }}
+  VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: $${{ vars.${ applicationinsights_connection_string_key } }}
 
 jobs:
   build_and_deploy_job:
