@@ -20,9 +20,16 @@ locals {
   identity_db_name   = "BeSportSmart_Identity"
   pg_allowed_ip_list = ["76.31.141.141"]
 
-  frontend_static_app_token_key       = "FRONTEND_STATIC_WEB_APPS_API_TOKEN"
   frontend_static_app_token_vault_key = "FRONTEND-STATIC-WEB-APPS-API-TOKEN"
   frontend_static_app_uri             = "https://besportsmart.com"
+  frontend_static_app_repository      = "be-sport-smart-frontend"
+
+  frontend_workflow_token_key                                 = "STATIC_WEB_APPS_API_TOKEN"
+  frontend_workflow_backend_base_url_key                      = "BACKEND_BASE_URL"
+  frontend_workflow_dynamic_localization_base_url_key         = "DYNAMIC_LOCALIZATION_BASE_URL"
+  frontend_workflow_applicationinsights_connection_string_key = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+
+  github_token_key = "GITHUB_TOKEN"
 
   backend_app_admin_username_key = "BSS-BACKEND-APP-ADMIN-USERNAME"
   backend_app_admin_username     = random_id.backend_app_admin_username.hex
@@ -31,8 +38,7 @@ locals {
   backend_app_admin_password_key = "BSS-BACKEND-APP-ADMIN-PASSWORD"
   backend_app_admin_password     = random_password.backend_app_admin_password.result
 
-  frontend_app_command_line = "pm2 serve /home/site/wwwroot/dist --no-daemon --spa"
-  backend_app_command_line  = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
+  backend_app_command_line = "dotnet /home/site/wwwroot/Bss.Bootstrap.dll"
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -149,35 +155,6 @@ module "app_service_plan" {
 }
 
 # ------------------------------------------------------------------------------------------------------
-# Deploy front-end app
-# ------------------------------------------------------------------------------------------------------
-module "frontend_app" {
-  source         = "../../../modules/azure/app_service_node"
-  location       = var.apps_location
-  rg_name        = azurerm_resource_group.rg.name
-  resource_token = local.resource_token
-  always_on      = false
-
-  tags               = merge(local.tags, { azd-service-name : "frontend" })
-  service_name       = "frontend"
-  appservice_plan_id = module.app_service_plan.APPSERVICE_PLAN_ID
-  use_32_bit_worker  = true
-
-  app_settings = {
-    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "False"
-    "ENABLE_ORYX_BUILD"              = "True"
-
-    # Only 'VITE_' prefixed variables are exposed to the front-end app due to security reasons
-    # "VITE_DYNAMIC_LOCALIZATION_BASE_URL"         = local.localization_test_file
-    # "VITE_APPLICATIONINSIGHTS_CONNECTION_STRING" = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
-  }
-
-  identity_type = "SystemAssigned"
-
-  app_command_line = local.frontend_app_command_line
-}
-
-# ------------------------------------------------------------------------------------------------------
 # Deploy front-end static web app
 # ------------------------------------------------------------------------------------------------------
 module "frontend_static_app" {
@@ -238,17 +215,6 @@ module "backend_app" {
   app_command_line = local.backend_app_command_line
 }
 
-# Workaround: set BACKEND_BASE_URL to the backend_app URI after both apps are deployed
-# resource "null_resource" "frontend_app_set_backend_url" {
-#   triggers = {
-#     web_uri = module.backend_app.URI
-#   }
-
-#   provisioner "local-exec" {
-#     command = "az webapp config appsettings set --resource-group ${azurerm_resource_group.rg.name} --name ${module.frontend_app.APPSERVICE_NAME} --settings VITE_BACKEND_BASE_URL=${module.backend_app.URI}"
-#   }
-# }
-
 # ------------------------------------------------------------------------------------------------------
 # Deploy blob storage
 # ------------------------------------------------------------------------------------------------------
@@ -296,14 +262,6 @@ module "web_app_deployment_identity" {
     {
       role_definition_name = "Website Contributor"
       scope                = module.backend_app.ID
-    },
-    {
-      role_definition_name = "Website Contributor"
-      scope                = module.frontend_app.ID
-    },
-    {
-      role_definition_name = "Website Contributor"
-      scope                = module.frontend_static_app.ID
     }
   ]
 }
@@ -317,51 +275,79 @@ resource "azurerm_source_control_token" "source_token" {
   token_secret = var.github_token
 }
 
+provider "github" {
+  token = var.github_token
+  owner = var.github_owner
+}
+
+# ------------------------------------------------------------------------------------------------------
+# Configure source control for the backend app
+# ------------------------------------------------------------------------------------------------------
 module "backend_app_source_control" {
   source              = "../../../modules/azure/app_service_source_control"
   rg_name             = azurerm_resource_group.rg.name
-  organization        = "vosaba"
+  organization        = var.github_owner
   repository          = "be-sport-smart-backend"
   branch              = "main"
   app_identity        = module.backend_app.ID
   app_deploy_identity = module.web_app_deployment_identity.identity_id
 }
 
-# module "frontend_static_app_source_control" {
-#   source              = "../../../modules/azure/app_service_source_control"
-#   rg_name             = azurerm_resource_group.rg.name
-#   organization        = "vosaba"
-#   repository          = "be-sport-smart-frontend"
-#   branch              = "main"
-#   app_identity        = module.frontend_static_app.ID
-#   app_deploy_identity = module.web_app_deployment_identity.identity_id
-# }
 
-provider "github" {
-  token = var.github_token
-  owner = var.github_owner
-}
-
-resource "github_actions_secret" "frontend_static_app_secret" {
-  repository      = "be-sport-smart-frontend"
-  secret_name     = local.frontend_static_app_token_key
+# ------------------------------------------------------------------------------------------------------
+# Configure secrets and variables for the frontend app repository
+# ------------------------------------------------------------------------------------------------------
+resource "github_actions_secret" "frontend_static_app_token_secret" {
+  repository      = local.frontend_static_app_repository
+  secret_name     = local.frontend_workflow_token_key
   plaintext_value = module.frontend_static_app.API_KEY
 }
 
-resource "github_repository_file" "foo" {
-  repository = "be-sport-smart-frontend"
+resource "github_actions_secret" "frontend_static_github_token_secret" {
+  repository      = local.frontend_static_app_repository
+  secret_name     = local. github_token_key
+  plaintext_value = var.github_token
+}
+
+resource "github_actions_variable" "frontend_static_backend_base_url_variable" {
+  repository    = local.frontend_static_app_repository
+  variable_name = local.frontend_workflow_backend_base_url_key
+  value         = module.backend_app.APPSERVICE_URL
+}
+
+resource "github_actions_variable" "frontend_static_dynamic_localization_base_url_variable" {
+  repository    = local.frontend_static_app_repository
+  variable_name = local.frontend_workflow_dynamic_localization_base_url_key
+  value         = jsondecode(jsonencode(module.blob_storage.blob_container_urls))["localization"]
+}
+
+resource "github_actions_variable" "frontend_static_applicationinsights_connection_string_variable" {
+  repository    = local.frontend_static_app_repository
+  variable_name = local.frontend_workflow_applicationinsights_connection_string_key
+  value         = module.application_insights.APPLICATIONINSIGHTS_CONNECTION_STRING
+}
+
+# ------------------------------------------------------------------------------------------------------
+# Configure github actions for the frontend app
+# ------------------------------------------------------------------------------------------------------
+resource "github_repository_file" "static_web_app_deploy_workflow" {
+  repository = local.frontend_static_app_repository
   branch     = "main"
-  file       = ".github/workflows/azure-static-web-app.yml"
-  content = templatefile("./templates/azure-static-web-app.tpl",
+  file       = ".github/workflows/deploy_app.yml"
+  content = templatefile("../../templates/deploy_static_web_app.tpl",
     {
-      app_token_key   = local.frontend_static_app_token_key
-      app_location    = "/"
-      api_location    = ""
-      output_location = "dist"
+      app_location                              = "/"
+      api_location                              = ""
+      output_location                           = "dist"
+      github_token_key                          = local.github_token_key
+      app_token_key                             = local.frontend_workflow_token_key
+      backend_base_url_key                      = local.frontend_workflow_backend_base_url_key
+      dynamic_localization_base_url_key         = local.frontend_workflow_dynamic_localization_base_url_key
+      applicationinsights_connection_string_key = local.frontend_workflow_applicationinsights_connection_string_key
     }
   )
-  commit_message      = "Add workflow (by Terraform)"
-  commit_author       = "vosaba"
-  commit_email        = "vosaba@example.com"
+  commit_message      = "Modify workflow (by Terraform)"
+  commit_author       = "terrafrom-ci"
+  commit_email        = "terrafrom.ci@example.com"
   overwrite_on_create = true
 }

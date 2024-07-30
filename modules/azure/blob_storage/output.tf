@@ -11,5 +11,7 @@ output "blob_container_names" {
 }
 
 output "blob_container_urls" {
-  value = [for container in azurerm_storage_container.blob_containers : "https://${azurerm_storage_account.storage_account.name}.blob.core.windows.net/${container.name}"]
+  value = { for container_name, container in azurerm_storage_container.blob_containers :
+    container_name => "https://${azurerm_storage_account.storage_account.name}.blob.core.windows.net/${container.name}"
+  }
 }
