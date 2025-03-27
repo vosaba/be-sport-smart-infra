@@ -22,6 +22,7 @@ locals {
 
   frontend_static_app_token_vault_key = "FRONTEND-STATIC-WEB-APPS-API-TOKEN"
   frontend_static_app_uri             = "https://besportsmart.com"
+  frontend_static_app_uri_localhost   = "http://localhost:5173/"# for testing purposes
   frontend_static_app_repository      = "be-sport-smart-frontend"
 
   frontend_workflow_token_key                                 = "STATIC_WEB_APPS_API_TOKEN"
@@ -225,7 +226,7 @@ module "blob_storage" {
   tags                 = local.tags
   resource_token       = local.resource_token
   container_names      = ["localization", "images"]
-  cors_allowed_origins = [module.frontend_static_app.URI, local.frontend_static_app_uri]
+  cors_allowed_origins = [module.frontend_static_app.URI, local.frontend_static_app_uri, local.frontend_static_app_uri_localhost]
   writer_identity_id   = module.backend_app.IDENTITY_PRINCIPAL_ID
 }
 
